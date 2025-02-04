@@ -1,0 +1,44 @@
+version: "3.9"
+
+services:
+  otherside_ai_db_test:
+    image: postgres:16.6
+    container_name: otherside_ai_postgres
+    ports:
+      - "5423:5432"
+    restart: always
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - otherside_ai_test_postgres_data:/var/lib/postgresql/data
+    networks:
+      - otherside_ai_test-network
+
+  bot:
+    build: .
+#    image: na3810/otherside_ai_bot:test
+    container_name: otherside_ai_test_bot
+    restart: always
+    env_file:
+      - ./.env
+    depends_on:
+      - otherside_ai_db_test
+    volumes:
+      - otherside_ai_test_logs:/app/logs
+      - otherside_ai_test_downloads:/app/downloads
+      - /home/OthersideAI_bot/test/faiss_index_RU:/app/faiss_index_RU
+      - /home/OthersideAI_bot/test/fasolka.json:/app/db/fasolka.json
+
+    networks:
+      - otherside_ai_test-network
+
+networks:
+  otherside_ai_test-network:
+
+volumes:
+  otherside_ai_test_logs:
+  otherside_ai_test_downloads:
+  otherside_ai_test_db:
+  otherside_ai_test_postgres_data:
