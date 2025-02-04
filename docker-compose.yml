@@ -17,8 +17,7 @@ services:
       - otherside_ai_test-network
 
   bot:
-    build: .
-#    image: na3810/otherside_ai_bot:test
+    image: na3810/otherside_ai_bot:test
     container_name: otherside_ai_test_bot
     restart: always
     env_file:
