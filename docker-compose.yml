@@ -39,5 +39,4 @@ networks:
 volumes:
   otherside_ai_test_logs:
   otherside_ai_test_downloads:
-  otherside_ai_test_db:
   otherside_ai_test_postgres_data:
