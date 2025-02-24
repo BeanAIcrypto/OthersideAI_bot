@@ -293,6 +293,8 @@ def update_user_language(user_id, language):
 
 
 def add_history_entry(user_id, question, response):
+    question = question.replace("\x00", " ") if question else "Запрос отсутствует"
+    response = response.replace("\x00", " ") if response else "Запрос отсутствует"
     try:
         with get_db_connection() as connection:
             with connection.cursor() as cursor:
