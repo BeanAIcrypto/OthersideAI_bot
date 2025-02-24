@@ -28,7 +28,7 @@ from db.dbworker import (
     get_user_training_last_message,
     update_get_user_keyboard,
 )
-from src.bot.bot_messages import MESSAGES
+from src.bot.bot_messages import MESSAGES, MESSAGES_ERROR
 from src.bot.promt import  PROMTS
 from db.background_functions import start_background_tasks
 import asyncio
@@ -317,15 +317,14 @@ async def text_handler(message: types.Message):
 
 @dp.message_handler(content_types=ContentType.DOCUMENT)
 async def document_handler(message: types.Message):
+    user_id = message.from_user.id
+    chat_id = message.chat.id
+    request_id = str(uuid.uuid4())
+    user_name = message.from_user.username
+
+    base_dir = os.path.join("downloads", str(user_id), request_id)
+    os.makedirs(base_dir, exist_ok=True)
     try:
-        user_id = message.from_user.id
-        chat_id = message.chat.id
-        request_id = str(uuid.uuid4())
-        user_name = message.from_user.username
-
-        base_dir = os.path.join("downloads", str(user_id), request_id)
-        os.makedirs(base_dir, exist_ok=True)
-
         document = message.document
         file_name = document.file_name
         file_path = os.path.join(base_dir, file_name)
@@ -349,19 +348,26 @@ async def document_handler(message: types.Message):
         if not await limit_check(limit, language, message, user_id, user_name):
             return
 
-        text_extraction_function = text_extraction_from_a_document[document.mime_type]
-
-        awaiting_message = await message.answer(MESSAGES["link_handler_await"][language])
-
-        if text_extraction_function:
-            text_document = text_extraction_function(file_path)
-            if not text_document:
-                await message.answer(MESSAGES["document_handler_error"][language])
-                return
-            logger.info(f"Из файла {file_name} получен текст: {text_document[:1000]}")
-        else:
-            await message.answer(MESSAGES["document_handler_not_found"][language])
+        text_extraction_function = text_extraction_from_a_document.get(
+            document.mime_type
+        )
+        if not text_extraction_function:
+            await message.answer(
+                MESSAGES_ERROR["document_handler_error_type_document"][language]
+            )
             return
+        logger.info(f"document.mime_type = {document.mime_type}")
+
+        text_document = text_extraction_function(file_path)
+        if not text_document:
+            await message.answer(
+                MESSAGES_ERROR["document_handler_error_none_document"][language]
+            )
+            return
+
+        logger.info(
+            f"Из файла {file_name} извлечен текст: {text_document[:1000]}"
+        )
 
         question = (f'Подпись к документу или(и) запрос пользователя: {user_text}.'
                     f'Название документа: "{file_name}". Содержание документа\n :{text_document}')
@@ -378,12 +384,12 @@ async def document_handler(message: types.Message):
             chat_id=chat_id,
             message=message
         )
-        await awaiting_message.delete()
-        await clear_directory(base_dir)
         logger.info(f"Файл {file_name} был удален после обработки.")
 
     except Exception as e:
-        logger.error(f"Ошибка: {e}, сообщение: {message}")
+        logger.error(f"Ошибка: {e}, сообщение: {message}", exc_info=True)
+    finally:
+        await clear_directory(base_dir)
 
 
 @dp.message_handler(content_types=ContentTypes.PHOTO)

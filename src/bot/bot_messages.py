@@ -508,5 +508,27 @@ MESSAGES_ERROR = {
     "mhtml_extraction_error": {
         "ru": "Не удалось извлечь текст из MHTML файла.",
         "en": "Failed to extract text from the MHTML file."
-    }
+    },
+
+    "document_handler_error_type_document": {
+        "ru": "Поддерживаемые форматы:\n"
+              "📄 Документы: PDF (.pdf), Word (.docx) (Преобразуйте .doc в .docx)\n"
+              "📊 Таблицы: Excel (.xlsx) (Преобразуйте .xls в .xlsx)\n"
+              "📽 Презентации: PowerPoint (.pptx) (Преобразуйте .ppt в .pptx)\n"
+              "📦 Архивы: ZIP (.zip), 7Z (.7z) (Преобразуйте .rar в .zip)\n"
+              "📝 Markdown: .md\n\n"
+              "Если ваш файл не поддерживается, преобразуйте его перед отправкой.",
+        "en": "Supported formats:\n"
+              "📄 Documents: PDF (.pdf), Word (.docx) (Convert .doc to .docx)\n"
+              "📊 Spreadsheets: Excel (.xlsx) (Convert .xls to .xlsx)\n"
+              "📽 Presentations: PowerPoint (.pptx) (Convert .ppt to .pptx)\n"
+              "📦 Archives: ZIP (.zip), 7Z (.7z) (Convert .rar to .zip)\n"
+              "📝 Markdown: .md\n\n"
+              "If your file is not supported, please convert it before sending.",
+    },
+    "document_handler_error_none_document": {
+        "ru": "Данные не получилось извлечь, попробуйте другой формат или проверьте содержание документа.",
+        "en": "Failed to extract data. Try a different format or check the document's content.",
+    },
+
 }
