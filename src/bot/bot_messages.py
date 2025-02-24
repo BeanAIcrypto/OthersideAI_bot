@@ -532,3 +532,46 @@ MESSAGES_ERROR = {
     },
 
 }
+
+MESSAGES_ERROR_YOU_TUBE_LINK_PROCESSING = {
+    "no_transcript": {
+        "ru": "К сожалению, у этого видео нет доступных субтитров.",
+        "en": "Unfortunately, this video has no available subtitles.",
+    },
+    "transcripts_disabled": {
+        "ru": "У этого видео отключены субтитры.",
+        "en": "Subtitles are disabled for this video.",
+    },
+    "connection_error": {
+        "ru": "Ошибка соединения с сервером. Попробуйте позже.",
+        "en": "Connection error. Please try again later.",
+    },
+    "timeout_error": {
+        "ru": "Время ожидания истекло. Попробуйте еще раз.",
+        "en": "Timeout error. Please try again.",
+    },
+    "file_not_found": {
+        "ru": "Ошибка: файл не найден.",
+        "en": "Error: File not found.",
+    },
+    "permission_error": {
+        "ru": "Ошибка прав доступа. Проверьте настройки.",
+        "en": "Permission error. Please check your settings.",
+    },
+    "import_error": {
+        "ru": "Ошибка импорта необходимых библиотек. Установите их командой `pip install youtube-transcript-api`.",
+        "en": "Import error. Please install the necessary package using `pip install youtube-transcript-api`.",
+    },
+    "value_error": {
+        "ru": "Ошибка значения. Проверьте вводимые данные.",
+        "en": "Value error. Please check the input data.",
+    },
+    "type_error": {
+        "ru": "Ошибка типа данных. Проверьте корректность аргументов.",
+        "en": "Type error. Check argument types.",
+    },
+    "unknown_error": {
+        "ru": "Произошла неизвестная ошибка. Пожалуйста, попробуйте позже.",
+        "en": "An unknown error occurred. Please try again later.",
+    },
+}
