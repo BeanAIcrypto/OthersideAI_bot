@@ -77,14 +77,14 @@ async def process_user_message(user_id, user_name, text, language, history, prom
             parse_mode="MarkdownV2"
         )
 
-        audio_file_path, base_dir = await generate_audio_tts(response, user_id, bot, language='ru')
-        with open(audio_file_path, "rb") as audio:
-            await message.bot.send_voice(
-                chat_id=message.chat.id,
-                voice=types.InputFile(audio, filename="response.ogg"),
-            )
-
-        await clear_directory(base_dir)
+        # audio_file_path, base_dir = await generate_audio_tts(response, user_id, bot, language='ru')
+        # with open(audio_file_path, "rb") as audio:
+        #     await message.bot.send_voice(
+        #         chat_id=message.chat.id,
+        #         voice=types.InputFile(audio, filename="response.ogg"),
+        #     )
+        #
+        # await clear_directory(base_dir)
         await bot.delete_message(chat_id=user_id, message_id=first_message.message_id)
 
         logger.info(f"Обработка сообщения от пользователя {user_name} завершена")
