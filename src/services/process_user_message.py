@@ -324,6 +324,7 @@ async def process_user_message(user_id, user_name, text, language, history, prom
         if not response:
             raise ValueError("Empty response received")
 
+        await bot.send_chat_action(chat_id=user_id, action='typing')
         logger.info(f"Сообщения от модели: {response}")
         assistant_response_id = add_history_entry(user_id, text, response)
 
@@ -354,13 +355,13 @@ async def process_user_message(user_id, user_name, text, language, history, prom
 
         logger.info(f"Обработка сообщения от пользователя {user_name} завершена")
     except ValueError as ve:
-        logger.error(f"Ошибка: {ve}")
+        logger.error(f"Ошибка: {ve}", exc_info=True)
         await bot.edit_message_text(
             chat_id=user_id,
             message_id=first_message.message_id,
             text=MESSAGES_ERROR["error_response"][language]
         )
     except Exception as e:
-        logger.error(f"Произошла ошибка обработки сообщения: {e}")
+        logger.error(f"Произошла ошибка обработки сообщения: {e}",exc_info=True)
         await bot.send_message(chat_id=user_id, text=MESSAGES_ERROR["error_response"][language])
 

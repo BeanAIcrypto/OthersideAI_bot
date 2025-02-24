@@ -83,12 +83,13 @@ async def create_rag_chain(retriever_chain, llm, prompt_text):
 async def response_answer(user_id, text, language, history, prompt, bot):
     """Обработка запроса пользователя"""
     try:
-        # Форматирование истории
-        formatted_history = [
-            {"role": "user", "content": entry['question']}
-            if 'question' in entry else {"role": "assistant", "content": entry['response']}
-            for entry in history if 'question' in entry and 'response' in entry
-        ]
+        formatted_history = []
+
+        for entry in history:
+            if 'question' in entry:
+                formatted_history.append({"role": "user", "content": entry['question']})
+            if 'response' in entry:
+                formatted_history.append({"role": "assistant", "content": entry['response']})
 
         llm = ChatOpenAI(model_name=MODEL_GPT4, openai_api_key=API_KEY)
         logger.info(f"Модель OpenAI: {MODEL_GPT4}")
