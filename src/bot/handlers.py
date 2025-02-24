@@ -425,7 +425,8 @@ async def handle_photo(message: types.Message):
             prompt='image',
             bot=bot,
             message=message,
-            chat_id=chat_id
+            chat_id=chat_id,
+            file_url=file_url,
         )
 
     except Exception as e:

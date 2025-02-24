@@ -10,8 +10,8 @@ from db.dbworker import (get_user_limit,
 
 from src.bot.bot_messages import MESSAGES, MESSAGES_ERROR
 from dotenv import load_dotenv
-
 from src.converter.image_processing import image_processing
+from src.bot.promt import PROMTS
 
 load_dotenv()
 
@@ -308,7 +308,7 @@ def convert_markdown_to_markdownv2(text: str) -> str:
         return text
 
 
-async def process_user_message(user_id, user_name, text, language, history, prompt, bot, message = None, chat_id=None):
+async def process_user_message(user_id, user_name, text, language, history, prompt, bot, message = None, chat_id=None, file_url=None):
     try:
         logger.info(f"Вызов модели для пользователя {user_name} (ID: {user_id}) с запросом: {text}")
         await bot.send_chat_action(chat_id=message.chat.id, action=ChatActions.TYPING)
@@ -317,7 +317,7 @@ async def process_user_message(user_id, user_name, text, language, history, prom
         first_message = await bot.send_message(chat_id=user_id, text=MESSAGES["process_user_message"][language])
         await bot.send_chat_action(chat_id=message.chat.id, action=ChatActions.TYPING)
         if prompt == 'image' :
-            response = await image_processing(message, language, text, bot, user_id)
+            response = await image_processing(message, text, bot, user_id, file_url, prompt=PROMTS[prompt][language])
         else:
             response = await response_answer(user_id, text, language, history, prompt, bot)
 
