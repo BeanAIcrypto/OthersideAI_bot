@@ -34,7 +34,7 @@ async def send_reminder_work(bot: Bot) -> None:
         with get_db_connection() as connection:
             cursor = connection.cursor()
 
-            for h, hours, column_name in [
+            for hours, column_name in [
                 (24, "reminder_24_sent"),
                 (72, "reminder_72_sent"),
                 (168, "reminder_168_sent"),
