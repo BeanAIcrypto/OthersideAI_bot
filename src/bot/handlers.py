@@ -37,6 +37,7 @@ from dotenv import load_dotenv
 import logging
 from src.converter.image_processing import downloads_image
 from src.services.clear_directory import clear_directory
+from db.dbworker import update_user_limit
 
 load_dotenv()
 
@@ -143,7 +144,7 @@ async def voice(message: types.Message):
         if not await limit_check(limit, language, message, user_id, user_name):
             return
 
-        text = await transcribe_voice_message(language, message, user_id, user_name)
+        text = await transcribe_voice_message(language, message, user_id, user_name, bot)
         if not text:
             return
 
@@ -162,7 +163,7 @@ async def voice(message: types.Message):
         )
 
     except Exception as e:
-        logger.error(f"Ошибка: {e}, сообщение: {message}")
+        logger.error(f"Ошибка: {e}, сообщение: {message}", exc_info=True)
 
 
 @dp.message_handler(lambda message: re.search(

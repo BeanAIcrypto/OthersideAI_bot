@@ -408,6 +408,11 @@ MESSAGES = {
               "Сети: BNB, ARB, OP, ERC20\n"
               "```0x1D99EdC1431f27cF26FF8a464A814Ba2Bb757602```\n"
     },
+    "unexpected_error": {
+        "ru": "Ошибка: произошла непредвиденная ошибка при обработке запроса. Попробуйте снова или обратитесь в поддержку.",
+        "en": "Error: An unexpected error occurred while processing the request. Please try again or contact support.",
+    },
+
 
 }
 

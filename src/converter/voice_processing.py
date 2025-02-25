@@ -15,7 +15,7 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 
-async def transcribe_voice_message(language: str, message, user_id: int, user_name: str) -> str | None:
+async def transcribe_voice_message(language: str, message, user_id: int, user_name: str, bot) -> str | None:
     """
     Транскрибирует голосовое сообщение пользователя.
 
@@ -54,7 +54,7 @@ async def transcribe_voice_message(language: str, message, user_id: int, user_na
             return None
 
         logger.info(f"[USER_ID: {user_id}] Отправка аудиофайла на транскрипцию...")
-        transcript_text = await transcribe_voice(audio_path, language, message)
+        transcript_text = await transcribe_voice(audio_path, language, message, user_id, bot)
         logger.info(f"[USER_ID: {user_id}] Текст транскрипции: {transcript_text[:50]}")
 
         return transcript_text
@@ -136,9 +136,9 @@ async def transcribe_voice(audio_path: str, language: str, message, user_id: int
 
                     else:
                         logger.warning("Транскрипция вернула пустой текст.")
-                        return None, 0
+                        return None
 
-                    return transcript_text, token_count
+                    return transcript_text
 
     except ValueError as ve:
         logger.error(f"Ошибка валидации данных: {ve}")
