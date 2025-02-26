@@ -365,14 +365,10 @@ async def document_handler(message: types.Message):
             )
             return
 
-        logger.info(
-            f"Из файла {file_name} извлечен текст: {text_document[:1000]}"
-        )
-
         question = (f'Подпись к документу или(и) запрос пользователя: {user_text}.'
                     f'Название документа: "{file_name}". Содержание документа\n :{text_document}')
 
-        logger.info(f"Пользователь {user_name} (ID: {user_id}) отправил сообщение: {question[:1000]}")
+        logger.info(f"Пользователь {user_name} (ID: {user_id}) отправил сообщение: {question[:500]}")
         await process_user_message(
             user_id=user_id,
             user_name=user_name,

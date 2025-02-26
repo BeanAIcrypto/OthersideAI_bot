@@ -310,7 +310,7 @@ def convert_markdown_to_markdownv2(text: str) -> str:
 
 async def process_user_message(user_id, user_name, text, language, history, prompt, bot, message = None, chat_id=None, file_url=None):
     try:
-        logger.info(f"Вызов модели для пользователя {user_name} (ID: {user_id}) с запросом: {text}")
+        logger.info(f"Вызов модели для пользователя {user_name} (ID: {user_id}) с запросом: {text[:500]}")
         await bot.send_chat_action(chat_id=message.chat.id, action=ChatActions.TYPING)
         await bot.send_chat_action(chat_id=user_id, action='typing')
 
@@ -343,6 +343,7 @@ async def process_user_message(user_id, user_name, text, language, history, prom
             logger.error(f"Ошибка перевода текста в MarkdownV2: {e}")
             await bot.send_message(chat_id=user_id, text=MESSAGES_ERROR["markdown_error"][language])
             return
+        logger.info(f"Сообщения от модели в формате markdownv2: {formatted_text}")
 
         await bot.send_message(
             chat_id=user_id,

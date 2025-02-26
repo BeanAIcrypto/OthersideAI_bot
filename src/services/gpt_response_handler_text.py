@@ -125,7 +125,6 @@ async def response_answer(user_id, text, language, history, prompt, bot):
 
         update_user_limit(user_id, limit - (total_tokens_input + total_tokens_response))
 
-        logger.info(f"Ответ модели: {response_text}")
         return response_text
     except OpenAIError as e:
         logger.error(f"OpenAI Error: {e}", exc_info=True)

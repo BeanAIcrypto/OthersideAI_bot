@@ -8,7 +8,6 @@ from db.migration_users import mirgration_users
 from src.bot.handlers import on_startup
 
 
-
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -29,7 +28,7 @@ if __name__ == '__main__':
         create_db()
         logger.info('База данных создана')
 
-        mirgration_users()
+        # mirgration_users()
         logger.info('Пользователи перенесены')
 
         create_hash()

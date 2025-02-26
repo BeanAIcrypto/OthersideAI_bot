@@ -29,6 +29,7 @@ services:
       - otherside_ai_test_downloads:/app/downloads
       - /home/OthersideAI_bot/test/faiss_index_RU:/app/faiss_index_RU
       - /home/OthersideAI_bot/test/fasolka.json:/app/db/fasolka.json
+      - /home/OthersideAI_bot/test/fasolka.json:/app/db/fasolka.json
 
     networks:
       - otherside_ai_test-network

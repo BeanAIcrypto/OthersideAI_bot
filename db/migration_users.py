@@ -23,8 +23,8 @@ DB_CONFIG = {
 }
 
 # Путь к SQLite-файлу (адаптируйте под свой docker-контейнер или локальную среду)
-SQLITE_DB_PATH = "/app/db/database.db"
-# SQLITE_DB_PATH = "database.db"
+# SQLITE_DB_PATH = "/app/db/database.db"
+SQLITE_DB_PATH = "database.db"
 
 def get_sqlite_connection() -> sqlite3.Connection:
     """
