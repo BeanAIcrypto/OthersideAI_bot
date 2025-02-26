@@ -6,7 +6,7 @@ import logging
 from datetime import datetime, timedelta
 from db.google_sheets import (
     append_row_to_google_sheet,
-    get_google_sheets_service
+    update_google_sheet_row
 )
 from db.database_connection import get_db_connection
 
@@ -227,13 +227,6 @@ def update_user_training_status(user_id, status):
                     ''', (status, user_id))
                 connection.commit()
                 logger.info(f"Статус обучения пользователя {user_id} обновлен на {status}")
-                user_data = load_user_data()
-                user_id_str = str(user_id)
-                if user_id_str in user_data:
-                    user_data[user_id_str]['status'] = status
-                else:
-                    user_data[user_id_str] = {'language': 'None', 'status': status}
-                save_user_data(user_data)
     except Exception as e:
         logger.error(f"Ошибка обновления статуса: {str(e)}")
 
@@ -305,6 +298,10 @@ def add_history_entry(user_id, question, response):
                 history_id = cursor.fetchone()[0]
                 connection.commit()
                 logger.info(f"Запись в историю для пользователя {user_id} успешно добавлена.")
+
+                row_data = [history_id, question, response]
+                append_row_to_google_sheet(row_data, "history")
+
                 return history_id
     except psycopg2.Error as e:
         logger.error(f"Ошибка при добавлении записи в историю в базе данных: {str(e)}")
@@ -335,7 +332,6 @@ def update_dialog_score(rating, response_id):
         with get_db_connection() as connection:
             with connection.cursor() as cursor:
                 cursor.execute('SELECT * FROM user_history WHERE id = %s', (response_id,))
-                updated_row = cursor.fetchone()
 
                 cursor.execute('''
                     UPDATE user_history
@@ -346,10 +342,8 @@ def update_dialog_score(rating, response_id):
                 connection.commit()
                 logger.info(f"Оценка для записи {response_id} успешно обновлена в базе данных.")
 
-                if rating == "👎":
-                    row_data = list(updated_row)
-                    service = get_google_sheets_service()
-                    append_row_to_google_sheet(service, row_data, 'history')
+                update_google_sheet_row(response_id, rating)
+
     except psycopg2.Error as e:
         logger.error(f"Ошибка при обновлении оценки диалога в базе данных: {str(e)}")
     except Exception as e:
