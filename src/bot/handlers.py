@@ -119,7 +119,6 @@ async def donate(message: types.Message):
         logger.error(f"Неизвестная ошибка в обработчике команды /donate для {user_name} (ID: {user_id}): {str(e)}")
 
 
-# Выбор языка
 @dp.message_handler(commands=["language"])
 async def language_choice(message: types.Message):
     user_id = message.from_user.id

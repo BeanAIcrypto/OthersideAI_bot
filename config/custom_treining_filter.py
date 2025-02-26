@@ -9,7 +9,6 @@ class UserDataMiddleware(BaseMiddleware):
         user_id_str = str(user_id)
 
         user_data = load_user_data()
-        print(user_data)
 
         user_info = user_data.get(user_id_str)
 
@@ -30,7 +29,6 @@ class UserDataMiddleware(BaseMiddleware):
         user_id = callback_query.from_user.id
         user_id_str = str(user_id)
         user_data = load_user_data()
-        print(user_data)
         user_info = user_data.get(user_id_str)
 
         if user_info:
