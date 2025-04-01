@@ -3,6 +3,7 @@ import sys
 from dotenv import load_dotenv
 from aiogram import Bot, Dispatcher
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
+from aiogram.bot.api import TelegramAPIServer
 from src.utils.cli import parse_arguments
 import logging
 
