@@ -3,8 +3,6 @@ from config.bot_config import setup_bot, dp
 from db.dbworker import create_db
 from db.google_sheets import google_sheets
 import logging
-from db.hash_status_language_user import create_hash
-from db.migration_users import mirgration_users
 from src.bot.handlers import on_startup
 
 
@@ -27,12 +25,6 @@ if __name__ == '__main__':
 
         create_db()
         logger.info('База данных создана')
-
-        # mirgration_users()
-        logger.info('Пользователи перенесены')
-
-        create_hash()
-        logger.info('Словарь пользователей создан')
 
         setup_bot()
         logger.info('Бот настроен и готов к работе')

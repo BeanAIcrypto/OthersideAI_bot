@@ -1,5 +1,4 @@
 import re
-from aiogram import types
 from src.services.gpt_response_handler_text import response_answer
 from src.keyboards.drating_inline_buttons_keyboard import drating_inline_buttons_keyboard
 from aiogram.types import ChatActions

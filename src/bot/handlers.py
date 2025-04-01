@@ -19,20 +19,13 @@ from src.converter.you_tube_link_processing import you_tube_link_processing
 from db.dbworker import (
     create_user,
     update_dialog_score,
-    update_user_language,
     get_user_history,
     get_user_limit,
-    get_user_training,
-    update_user_training_status,
-    update_user_training_last_message,
-    get_user_training_last_message,
-    update_get_user_keyboard,
 )
 from src.bot.bot_messages import MESSAGES, MESSAGES_ERROR
 from src.bot.promt import  PROMTS
 from db.background_functions import start_background_tasks
 import asyncio
-from src.services.delete_keyboard import remove_keyboards_from_messages
 from dotenv import load_dotenv
 import logging
 from src.converter.image_processing import downloads_image
@@ -66,7 +59,6 @@ async def on_startup(dispatcher: Dispatcher):
 async def set_default_commands(dp: Dispatcher):
     try:
         await bot.set_my_commands([
-            types.BotCommand("language", "Choose your language/ Выберите свой язык"),
             types.BotCommand("donate", "Donate/ Оформить донат"),
         ])
     except Exception as e:
@@ -78,15 +70,12 @@ async def start(message: types.Message):
     user_id = message.from_user.id
     user_name = message.from_user.username
     text = message.text
-    update_user_training_last_message(user_id, text)
     logger.info(f"Команда /start от пользователя {user_name} (ID: {user_id})")
-    name_keyboard = 'language'
     try:
         create_user(user_id, user_name)
         logger.info(f"Пользователь {user_name} (ID: {user_id}) добавлен в базу данных")
-        sent_message = await message.answer(MESSAGES["start"], reply_markup=create_language_keyboard())
-        update_get_user_keyboard(user_id, name_keyboard, sent_message.message_id)
-        logger.info(f"Сообщение с выбором языка отправлено пользователю {user_name}")
+        await message.answer(MESSAGES["handle_language_choice_first_message"]["en"])
+        logger.info(f"Сообщение с привественным сообщением отправленно пользователю: {user_name}")
         await analytics_creating_target(user_id, user_name, target_start_id=10339, value=None, unit=None)
     except Exception as e:
         logger.error(f"Ошибка в обработчике команды /start: {e}")
@@ -99,12 +88,8 @@ async def donate(message: types.Message):
     user_name = message.from_user.username
 
     try:
-        language = await language_selection(user_id, message)
-        if not language or language == "None":
-            raise KeyError(f"Язык не установлен для пользователя {user_name} (ID: {user_id})")
-
         await message.answer(
-            MESSAGES["donate"][language],
+            MESSAGES["donate"]["en"],
             parse_mode="MarkdownV2"
         )
         logger.info(f"Ссылка на оплату отправлена пользователю {user_name} (ID: {user_id})")
@@ -119,14 +104,6 @@ async def donate(message: types.Message):
         logger.error(f"Неизвестная ошибка в обработчике команды /donate для {user_name} (ID: {user_id}): {str(e)}")
 
 
-@dp.message_handler(commands=["language"])
-async def language_choice(message: types.Message):
-    user_id = message.from_user.id
-    name_keyboard = 'language'
-    sent_message = await message.answer(MESSAGES["start"], reply_markup=create_language_keyboard())
-    update_get_user_keyboard(user_id, name_keyboard, sent_message.message_id)
-
-
 @dp.message_handler(content_types=ContentType.VOICE)
 async def voice(message: types.Message):
     try:
@@ -135,15 +112,11 @@ async def voice(message: types.Message):
         user_name = message.from_user.username
         history = get_user_history(user_id)
 
-        language = await language_selection(user_id, message)
-        if not language:
-            return
-
         limit = get_user_limit(user_id)
-        if not await limit_check(limit, language, message, user_id, user_name):
+        if not await limit_check(limit, "en", message, user_id, user_name):
             return
 
-        text = await transcribe_voice_message(language, message, user_id, user_name, bot)
+        text = await transcribe_voice_message("en", message, user_id, user_name, bot)
         if not text:
             return
 
@@ -153,9 +126,9 @@ async def voice(message: types.Message):
             user_id=user_id,
             user_name=user_name,
             text=text,
-            language=language,
+            language="en",
             history=history,
-            prompt=str(PROMTS['text_voice'][language]),
+            prompt=str(PROMTS['text_voice']["en"]),
             bot=bot,
             chat_id=chat_id,
             message=message
@@ -175,26 +148,22 @@ async def you_tube_link_handler(message: types.Message):
         user_name = message.from_user.username
         text = message.text
 
-        language = await language_selection(user_id, message)
-        if not language:
-            return
-
         limit = get_user_limit(user_id)
-        if not await limit_check(limit, language, message, user_id, user_name):
+        if not await limit_check(limit, "en", message, user_id, user_name):
             return
 
         url_match = re.search(r'https:\/\/(www\.)?(youtube\.com|youtu\.be)\/[^\s]+', text)
         if url_match:
             url = url_match.group(0)
         else:
-            await message.answer(MESSAGES["link_handler"][language])
+            await message.answer(MESSAGES["link_handler"]["en"])
             return
 
         logger.info(f"Сообщение пользователя {text}")
         logger.info(f"От пользователя {user_id} получен текст с ссылкой: {url}")
         history = get_user_history(user_id)
-        awaiting_message = await message.answer(MESSAGES["link_handler_await"][language])
-        link_text = await you_tube_link_processing(url, user_id, language, message, bot)
+        awaiting_message = await message.answer(MESSAGES["link_handler_await"]["en"])
+        link_text = await you_tube_link_processing(url, user_id, "en", message, bot)
 
         if not link_text:
             raise ValueError("Ошибка извлечения текста из YouTube ссылки")
@@ -210,9 +179,9 @@ async def you_tube_link_handler(message: types.Message):
             user_id=user_id,
             user_name=user_name,
             text=question,
-            language=language,
+            language="en",
             history=history,
-            prompt=str(PROMTS['you_tube_link'][language]),
+            prompt=str(PROMTS['you_tube_link']["en"]),
             bot=bot,
             chat_id=chat_id,
             message=message
@@ -230,19 +199,15 @@ async def link_handler(message: types.Message):
         user_name = message.from_user.username
         text = message.text
 
-        language = await language_selection(user_id, message)
-        if not language:
-            return
-
         limit = get_user_limit(user_id)
-        if not await limit_check(limit, language, message, user_id, user_name):
+        if not await limit_check(limit, "en", message, user_id, user_name):
             return
 
         url_match = re.search(r'https?:\/\/[^\s]+', text)
         if url_match:
             url = url_match.group(0)
         else:
-            await message.answer(MESSAGES["link_handler"][language])
+            await message.answer(MESSAGES["link_handler"]["en"])
             return
 
         logger.info(f"Сообщение пользователя {text}")
@@ -250,14 +215,14 @@ async def link_handler(message: types.Message):
 
         history = get_user_history(user_id)
 
-        awaiting_message = await message.answer(MESSAGES["link_handler_await"][language])
+        awaiting_message = await message.answer(MESSAGES["link_handler_await"]["en"])
 
         link_text = await link_processing(url)
 
         if link_text:
             logger.info(f"Из файла {url} получен текст: {link_text[:1000]}")
         else:
-            await message.answer(MESSAGES["link_handler_error_data"][language])
+            await message.answer(MESSAGES["link_handler_error_data"]["en"])
             return
 
         question = (f'Запрос пользователя: {text}.'
@@ -269,9 +234,9 @@ async def link_handler(message: types.Message):
             user_id=user_id,
             user_name=user_name,
             text=question,
-            language=language,
+            language="en",
             history=history,
-            prompt=str(PROMTS['link'][language]),
+            prompt=str(PROMTS['link']["en"]),
             bot=bot,
             chat_id=chat_id,
             message=message
@@ -289,12 +254,9 @@ async def text_handler(message: types.Message):
         user_name = message.from_user.username
         text = message.text
         history = get_user_history(user_id)
-        language = await language_selection(user_id, message)
-        if not language:
-            return
 
         limit = get_user_limit(user_id)
-        if not await limit_check(limit, language, message, user_id, user_name):
+        if not await limit_check(limit, "en", message, user_id, user_name):
             return
 
         logger.info(f"Пользователь {user_name} (ID: {user_id}) отправил сообщение: {text}")
@@ -303,9 +265,9 @@ async def text_handler(message: types.Message):
             user_id=user_id,
             user_name=user_name,
             text=text,
-            language=language,
+            language="en",
             history=history,
-            prompt=str(PROMTS['text_voice'][language]),
+            prompt=str(PROMTS['text_voice']["en"]),
             bot=bot,
             chat_id=chat_id,
             message=message
@@ -339,12 +301,8 @@ async def document_handler(message: types.Message):
 
         logger.info(f"Филе с именем {file_name} загружен в папку: downloads")
 
-        language = await language_selection(user_id, message)
-        if not language:
-            return
-
         limit = get_user_limit(user_id)
-        if not await limit_check(limit, language, message, user_id, user_name):
+        if not await limit_check(limit, "en", message, user_id, user_name):
             return
 
         text_extraction_function = text_extraction_from_a_document.get(
@@ -352,7 +310,7 @@ async def document_handler(message: types.Message):
         )
         if not text_extraction_function:
             await message.answer(
-                MESSAGES_ERROR["document_handler_error_type_document"][language]
+                MESSAGES_ERROR["document_handler_error_type_document"]["en"]
             )
             return
         logger.info(f"document.mime_type = {document.mime_type}")
@@ -360,7 +318,7 @@ async def document_handler(message: types.Message):
         text_document = text_extraction_function(file_path)
         if not text_document:
             await message.answer(
-                MESSAGES_ERROR["document_handler_error_none_document"][language]
+                MESSAGES_ERROR["document_handler_error_none_document"]["en"]
             )
             return
 
@@ -372,9 +330,9 @@ async def document_handler(message: types.Message):
             user_id=user_id,
             user_name=user_name,
             text=question,
-            language=language,
+            language="en",
             history=history,
-            prompt=str(PROMTS['document'][language]),
+            prompt=str(PROMTS['document']["en"]),
             bot=bot,
             chat_id=chat_id,
             message=message
@@ -400,12 +358,9 @@ async def handle_photo(message: types.Message):
         file_path = file_info.file_path
         file_url = f'https://api.telegram.org/file/bot{API_TOKEN}/{file_path}'
 
-        language = await language_selection(user_id, message)
-        if not language:
-            return
         limit = get_user_limit(user_id)
 
-        if not await limit_check(limit, language, message, user_id, user_name):
+        if not await limit_check(limit, "en", message, user_id, user_name):
             return
         await downloads_image(message, file_url)
 
@@ -416,7 +371,7 @@ async def handle_photo(message: types.Message):
             user_id=user_id,
             user_name=user_name,
             text=question,
-            language=language,
+            language="en",
             history=history,
             prompt='image',
             bot=bot,
@@ -438,11 +393,7 @@ async def all_updates_handler(message: types.Message):
     logger.info(
         f"Пользователь {user_name} (ID: {user_id}) отправил сообщение неизвестного типа: {message.content_type}")
 
-    language = await language_selection(user_id, message)
-    if not language:
-        return
-
-    await message.answer(MESSAGES["all_updates_handler"][language])
+    await message.answer(MESSAGES["all_updates_handler"]["en"])
     logger.info(f"Ответ отправлен пользователю {user_name} (ID: {user_id}) на неизвестное сообщение")
 
 
@@ -450,12 +401,6 @@ async def all_updates_handler(message: types.Message):
 async def process_callback_rating(callback_query: types.CallbackQuery):
     user_id = callback_query.from_user.id
     user_name = callback_query.from_user.username
-    language = callback_query.user_language
-
-    if language == "None":
-        logger.warning(f"Язык не установлен для пользователя {user_name} (ID: {user_id})")
-        await bot.send_message(user_id, MESSAGES["start"])
-        return
 
     logger.info(f"Обработка колбэка с оценкой от пользователя {user_name} (ID: {user_id}): {callback_query.data}")
 
@@ -465,13 +410,6 @@ async def process_callback_rating(callback_query: types.CallbackQuery):
         response_id = int(data[2])
 
         logger.info(f"Пользователь {user_name} (ID: {user_id}) выбрал оценку: {rating} для ответа {response_id}")
-
-        if language:
-            await bot.send_message(user_id, MESSAGES["process_callback_rating"][language])
-        else:
-            logger.warning(f"Неопределённый язык для пользователя {user_name} (ID: {user_id})")
-            await bot.send_message(user_id, MESSAGES["start"])
-            return
 
         await bot.edit_message_reply_markup(
             callback_query.message.chat.id,
@@ -486,49 +424,21 @@ async def process_callback_rating(callback_query: types.CallbackQuery):
         logger.info(f"Клавиатура оценки удалена для пользователя {user_name} (ID: {user_id})")
 
         await bot.answer_callback_query(callback_query.id)
+        await bot.send_message(user_id, MESSAGES["process_callback_rating"]["en"])
 
     except Exception as e:
         logger.error(f"Ошибка при обработке колбэка оценки для пользователя {user_name} (ID: {user_id}): {str(e)}")
-        await bot.send_message(user_id, MESSAGES["process_callback_rating_error"][language])
-
-
-@dp.callback_query_handler(lambda call: call.data in ["🇬🇧 English", "🇷🇺 Русский"])
-async def handle_language_choice_callback(callback_query: types.CallbackQuery):
-    try:
-        user_id = callback_query.from_user.id
-        user_name = callback_query.from_user.username
-        selected_language = callback_query.data
-        user_language = 'None'
-
-        logger.info(f"Пользователь {user_name} (ID: {user_id}) выбрал язык: {selected_language}")
-
-        if selected_language == "🇬🇧 English":
-            user_language = 'en'
-            await bot.send_message(user_id, MESSAGES['handle_language_choice_first_message'][user_language])
-            logger.info(f"Язык пользователя {user_name} (ID: {user_id}) обновлен на английский")
-        elif selected_language == "🇷🇺 Русский":
-            user_language = 'ru'
-            await bot.send_message(user_id, MESSAGES["handle_language_choice_first_message"][user_language])
-            logger.info(f"Язык пользователя {user_name} (ID: {user_id}) обновлен на русский")
-
-        await remove_keyboards_from_messages(bot, user_id, name_keyboard='language')
-        update_user_language(user_id, user_language)
-        await bot.answer_callback_query(callback_query.id)
-
-    except Exception as e:
-        logger.error(f"Ошибка при выборе языка для пользователя {user_name} (ID: {user_id}): {str(e)}")
-        await bot.send_message(user_id, MESSAGES["handle_language_choice_error"])
+        await bot.send_message(user_id, MESSAGES["process_callback_rating_error"]["en"])
 
 
 @dp.callback_query_handler(lambda c: c.data in ["strategy_investment", "improve_portfolio"])
 async def process_callback_button(callback_query: types.CallbackQuery):
     user_id = callback_query.from_user.id
-    language = callback_query.user_language
     if callback_query.data == "strategy_investment":
-        await bot.send_message(user_id, MESSAGES['process_callback_button_strategy_investment'][language], parse_mode="MarkdownV2")
+        await bot.send_message(user_id, MESSAGES['process_callback_button_strategy_investment']["en"], parse_mode="MarkdownV2")
 
     elif callback_query.data == "improve_portfolio":
-        await bot.send_message(user_id, MESSAGES['process_callback_button_improve_portfolio'][language], parse_mode="MarkdownV2")
+        await bot.send_message(user_id, MESSAGES['process_callback_button_improve_portfolio']["en"], parse_mode="MarkdownV2")
 
     await callback_query.answer()
 

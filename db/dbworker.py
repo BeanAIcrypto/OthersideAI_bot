@@ -15,27 +15,6 @@ logger = logging.getLogger(__name__)
 
 load_dotenv()
 initial_limit = 6666667
-USER_DATA_FILE = os.getenv('USER_DATA_FILE')
-
-
-def load_user_data():
-    try:
-        if os.path.exists(USER_DATA_FILE) and os.path.getsize(USER_DATA_FILE) > 0:
-            with open(USER_DATA_FILE, "r") as f:
-                return json.load(f)
-        else:
-            return {}
-    except Exception as e:
-        logger.error(f"Ошибка при загрузке данных из JSON: {e}")
-        return {}
-
-def save_user_data(data):
-    try:
-        with open(USER_DATA_FILE, "w") as f:
-            json.dump(data, f, ensure_ascii=False, indent=4)
-    except Exception as e:
-        logger.error(f"Ошибка при сохранении данных в JSON: {e}")
-
 
 def create_db():
     try:
@@ -46,7 +25,6 @@ def create_db():
                     id SERIAL PRIMARY KEY,
                     user_id BIGINT UNIQUE,
                     username TEXT,
-                    language TEXT DEFAULT 'None',
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     subscription_reminder_sent INTEGER DEFAULT 0
                 )''')
@@ -124,29 +102,6 @@ def create_user(user_id, username):
                     logger.info(f"Пользователь {user_id} уже существует в базе данных.")
     except psycopg2.Error as e:
         logger.error(f"Ошибка при создании пользователя в базе данных: {str(e)}")
-
-
-def update_user_data_file(user_id, language, status):
-    try:
-        user_data = load_user_data()
-        user_id_str = str(user_id)
-        user_data[user_id_str] = {
-            'language': language
-        }
-        save_user_data(user_data)
-    except Exception as e:
-        logger.error(e)
-
-
-def get_user_language(user_id: int) -> str:
-    try:
-        with get_db_connection() as connection:
-            with connection.cursor() as cursor:
-                cursor.execute('SELECT language FROM users WHERE user_id = %s', (user_id,))
-                row = cursor.fetchone()
-                return row[0] if row else None
-    except psycopg2.Error as e:
-        logger.error(f"Ошибка при получении языка пользователя из базы данных: {str(e)}")
 
 
 def get_user_limit(user_id):
@@ -263,28 +218,6 @@ def update_user_limit(user_id, limit):
         logger.error(f"Ошибка при обновлении данных в Google Sheets: {str(e)}")
 
 
-def update_user_language(user_id, language):
-    try:
-        with get_db_connection() as connection:
-            with connection.cursor() as cursor:
-                cursor.execute('SELECT id FROM users WHERE user_id = %s', (user_id,))
-                row = cursor.fetchone()
-
-                cursor.execute('UPDATE users SET language = %s WHERE user_id = %s', (language, user_id))
-                connection.commit()
-                logger.info(f"Язык пользователя {user_id} успешно обновлён в базе данных.")
-
-                user_data = load_user_data()
-                user_id_str = str(user_id)
-                user_data[user_id_str]['language'] = language
-                save_user_data(user_data)
-                logger.info("Язык пользователя обновлен в json файле")
-    except psycopg2.Error as e:
-        logger.error(f"Ошибка при обновлении языка пользователя в базе данных: {str(e)}")
-    except Exception as e:
-        logger.error(f"Ошибка при обновлении данных в Google Sheets: {str(e)}")
-
-
 def add_history_entry(user_id, question, response):
     question = question.replace("\x00", " ") if question else "Запрос отсутствует"
     response = response.replace("\x00", " ") if response else "Запрос отсутствует"
@@ -348,65 +281,3 @@ def update_dialog_score(rating, response_id):
         logger.error(f"Ошибка при обновлении оценки диалога в базе данных: {str(e)}")
     except Exception as e:
         logger.error(f"Ошибка при обновлении данных в Google Sheets: {str(e)}")
-
-
-def update_get_user_keyboard(user_id, name_keyboard, keyboard_id):
-    ALLOWED_KEYBOARDS = [
-        'language',
-        'pay',
-        'training',
-        'continuation_training',
-        'final_training',
-        'all_updates'
-    ]
-    try:
-        if name_keyboard not in ALLOWED_KEYBOARDS:
-            logger.error(f"Некорректное имя клавиатуры: {name_keyboard}")
-            return
-
-        with get_db_connection() as connection:
-            with connection.cursor() as cursor:
-                cursor.execute(f'SELECT {name_keyboard} FROM user_keyboards WHERE user_id = %s', (user_id,))
-                row = cursor.fetchone()
-                current_value = row[0] if row else ''
-                update_value = f'{current_value},{keyboard_id}' if current_value else str(keyboard_id)
-
-                cursor.execute(
-                    f'UPDATE user_keyboards SET {name_keyboard} = %s WHERE user_id = %s',
-                    (update_value, user_id)
-                )
-                connection.commit()
-                logger.info(f"Клавиатура {name_keyboard} обновлена для пользователя {user_id} с ID {keyboard_id}.")
-    except Exception as e:
-        logger.error(f"Ошибка при обновлении ID клавиатуры для пользователя {user_id}: {str(e)}")
-
-def delete_user_keyboard(user_id, name_keyboard):
-    ALLOWED_KEYBOARDS = [
-        'language',
-        'pay',
-        'training',
-        'continuation_training',
-        'final_training',
-        'all_updates'
-    ]
-    try:
-        if name_keyboard not in ALLOWED_KEYBOARDS:
-            logger.error(f"Некорректное имя клавиатуры: {name_keyboard}")
-            return
-
-        with get_db_connection() as connection:
-            with connection.cursor() as cursor:
-                cursor.execute(f'SELECT {name_keyboard} FROM user_keyboards WHERE user_id = %s', (user_id,))
-                row = cursor.fetchone()
-                current_value = row[0] if row else None
-                if not current_value:
-                    return current_value
-                cursor.execute(
-                    f'UPDATE user_keyboards SET {name_keyboard} = %s WHERE user_id = %s',
-                    ('', user_id)
-                )
-                connection.commit()
-                logger.info(f"Ид клавиатуры {name_keyboard} удалены.")
-                return current_value
-    except Exception as e:
-        logger.error(f"Ошибка при обновлении ID клавиатуры для пользователя {user_id}: {str(e)}")

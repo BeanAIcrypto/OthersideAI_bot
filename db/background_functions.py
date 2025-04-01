@@ -45,7 +45,6 @@ async def send_reminder_work(bot: Bot) -> None:
                         SELECT 
                             users.id, 
                             users.user_id, 
-                            users.language,
                             training.{column_name},
                             COALESCE(
                                 (
@@ -81,22 +80,10 @@ async def send_reminder_work(bot: Bot) -> None:
                 cursor.execute(query, (time_threshold,))
                 rows = cursor.fetchall()
 
-                for table_id, user_id, language, _, last_interaction in rows:
+                for table_id, user_id, _, last_interaction in rows:
                     message_key = f"send_reminder_{hours}h"
-                    message_text = MESSAGES[message_key][language]
-
-                    try:
-                        if hours == 72:
-                            reminder_keyboard = get_reminder_keyboard(language)
-                            await bot.send_message(user_id, message_text, reply_markup=reminder_keyboard)
-                        else:
-                            await bot.send_message(user_id, message_text)
-
-                        logger.info(f"Напоминание отправлено пользователю {user_id}: {message_text}")
-                    except Exception as e:
-                        logger.error(f"Ошибка при отправке сообщения пользователю {user_id}: {e}")
-                        continue
-
+                    message_text = MESSAGES[message_key]["en"]
+                    await bot.send_message(user_id, message_text)
                     cursor.execute(
                         f"UPDATE training SET {column_name} = 1 WHERE user_id = %s",
                         (user_id,),
@@ -132,7 +119,6 @@ async def send_subscription_reminder(bot: Bot) -> None:
 
         query = """
                 SELECT u.user_id,
-                       u.language,
                        t.reminder_24_sent_subscription,
                        (SELECT MAX(created_at) FROM user_history WHERE user_history.user_id = u.user_id) AS last_interaction
                 FROM users u
@@ -145,15 +131,15 @@ async def send_subscription_reminder(bot: Bot) -> None:
             cursor.execute(query)
             rows = cursor.fetchall()
 
-            for user_id, language, reminder_24_sent, last_interaction in rows:
+            for user_id, reminder_24_sent, last_interaction in rows:
                 if last_interaction and last_interaction > datetime.now() - timedelta(minutes=30):
                     continue
 
                 if not reminder_24_sent:
                     await bot.send_message(
                         user_id,
-                        MESSAGES["send_subscription_reminder_24"][language] + os.getenv("CHANNEL_LINK"),
-                        reply_markup=check_subscriptions_keyboard(language),
+                        MESSAGES["send_subscription_reminder_24"]["en"] + os.getenv("CHANNEL_LINK"),
+                        reply_markup=check_subscriptions_keyboard("en"),
                     )
                     cursor.execute("UPDATE training SET reminder_24_sent_subscription = 1 WHERE user_id = %s",
                                    (user_id,))

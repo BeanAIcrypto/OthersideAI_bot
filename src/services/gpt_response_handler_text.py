@@ -128,9 +128,9 @@ async def response_answer(user_id, text, language, history, prompt, bot):
         return response_text
     except OpenAIError as e:
         logger.error(f"OpenAI Error: {e}", exc_info=True)
-        await bot.edit_message_text(chat_id=user_id, text=MESSAGES["processing_error"]["ru"])
+        await bot.edit_message_text(chat_id=user_id, text=MESSAGES["processing_error"]["en"])
         return
     except Exception as e:
         logger.error(f"Ошибка обработки: {e}", exc_info=True)
-        await bot.edit_message_text(chat_id=user_id, text=MESSAGES["unexpected_error"]["ru"])
+        await bot.edit_message_text(chat_id=user_id, text=MESSAGES["unexpected_error"]["en"])
         return
