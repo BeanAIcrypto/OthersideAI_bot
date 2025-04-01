@@ -3,8 +3,6 @@ import sys
 from dotenv import load_dotenv
 from aiogram import Bot, Dispatcher
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
-from config.custom_treining_filter import setup_middlewares
-from aiogram.bot.api import TelegramAPIServer
 from src.utils.cli import parse_arguments
 import logging
 
@@ -30,8 +28,6 @@ try:
         server = TelegramAPIServer.from_base('https://tgrasp.co')
         bot = Bot(token=TG_TOKEN, server=server)
         dp = Dispatcher(bot, storage=MemoryStorage(), run_tasks_by_default=True)
-
-        setup_middlewares(dp)
 
     else:
         logger.info('init flag был выбран, выполнение программы не требуется. Завершение работы.')
