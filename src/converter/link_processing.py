@@ -45,7 +45,7 @@ async def process_dynamic_page(url):
             try:
                 response = await page.goto(url, wait_until='networkidle', timeout=60000)
             except TimeoutError:
-                logger.error(MESSAGES_ERROR["dynamic_page_timeout"]["ru"])
+                logger.error(MESSAGES_ERROR["dynamic_page_timeout"]["en"])
                 await browser.close()
                 return None
 
@@ -56,7 +56,7 @@ async def process_dynamic_page(url):
 
             content = await page.content()
             if "Please enable JavaScript" in content or "Checking your browser" in content:
-                logger.error(MESSAGES_ERROR["dynamic_page_access_denied"]["ru"])
+                logger.error(MESSAGES_ERROR["dynamic_page_access_denied"]["en"])
                 await browser.close()
                 return None
 
@@ -68,7 +68,7 @@ async def process_dynamic_page(url):
             return cleaned_text
 
     except Exception as e:
-        logger.error(MESSAGES_ERROR["dynamic_page_error"]["ru"])
+        logger.error(MESSAGES_ERROR["dynamic_page_error"]["en"])
         return None
 
 async def process_static_page(url):
@@ -76,7 +76,7 @@ async def process_static_page(url):
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
                 if response.status != 200:
-                    logger.error(MESSAGES_ERROR["static_page_error"]["ru"])
+                    logger.error(MESSAGES_ERROR["static_page_error"]["en"])
                     return None
 
                 content = await response.text()
@@ -88,7 +88,7 @@ async def process_static_page(url):
         return cleaned_text
 
     except Exception as e:
-        logger.error(MESSAGES_ERROR["static_page_error"]["ru"])
+        logger.error(MESSAGES_ERROR["static_page_error"]["en"])
         return None
 
 async def link_processing(url):
@@ -105,6 +105,6 @@ async def link_processing(url):
         return dynamic_content
 
     except Exception as e:
-        logger.error(MESSAGES_ERROR["link_processing_error"]["ru"])
+        logger.error(MESSAGES_ERROR["link_processing_error"]["en"])
         return None
 
