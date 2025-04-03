@@ -260,18 +260,18 @@ def convert_markdown_to_markdownv2(text: str) -> str:
     try:
         special_chars = r"\[\]()~`>#+\-=|{}.!"
 
-        username_pattern = re.compile(r'(@[A-Za-z0-9_]{5,32})')
+        link_pattern = re.compile(r"\[([^\]]+)\]\((https?:\/\/[^\)]+)\)")
+        links = {}
 
-        usernames = {}
-
-        def save_username(match):
-            """Сохраняет юзернеймы временно, чтобы не экранировать _ дважды."""
-            username = match.group(0)
-            placeholder = f"%%USERNAME{len(usernames)}%%"
-            usernames[placeholder] = username.replace("_", r"\_")
+        def save_link(match):
+            text, url = match.groups()
+            text = re.sub(f'([{re.escape(special_chars)}])', r'\\\1', text)
+            placeholder = f"%%LINK{len(links)}%%"
+            links[placeholder] = f"[{text}]({url})"
             return placeholder
 
-        text = username_pattern.sub(save_username, text)
+        text = link_pattern.sub(save_link, text)
+        text = latex_to_unicode(text)
 
         def escape_special_chars(part: str) -> str:
             """Экранирует спецсимволы MarkdownV2, но не трогает _ внутри юзернеймов."""
@@ -280,11 +280,15 @@ def convert_markdown_to_markdownv2(text: str) -> str:
 
         def process_text_part(part: str) -> str:
             """Обрабатывает обычный текст, не затрагивая кодовые блоки."""
-            part = part.replace("\x00", "")
             part = re.sub(r"(?<!\\)_", r"\_", part)
-            part = re.sub(r"(?<!\*)\*(?!\*)", r"\*", part)
             part = re.sub(r"\*\*(.*?)\*\*", r"*\1*", part)
+            part = re.sub(r"##### (.*?)\n", r"__\1__\n", part)
+            part = re.sub(r"#### (.*?)\n", r"__\1__\n", part)
             part = re.sub(r"### (.*?)\n", r"__\1__\n", part)
+            part = re.sub(r"## (.*?)\n", r"__\1__\n", part)
+            part = re.sub(r"# (.*?)\n", r"__\1__\n", part)
+            part = re.sub(r"__(.*?)__", r"__\1__", part)
+
             return escape_special_chars(part)
 
         code_block_pattern = re.compile(r"(```.*?```)", re.DOTALL)
@@ -297,8 +301,8 @@ def convert_markdown_to_markdownv2(text: str) -> str:
 
         result = "".join(processed_parts)
 
-        for placeholder, username in usernames.items():
-            result = result.replace(placeholder, username)
+        for placeholder, link in links.items():
+            result = result.replace(placeholder, link)
 
         return result
 

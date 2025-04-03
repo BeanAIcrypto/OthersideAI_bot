@@ -19,7 +19,6 @@ logger = logging.getLogger(__name__)
 
 MODEL_GPT4 = "gpt-4o-mini"
 API_KEY = os.getenv("GPT_SECRET_KEY_FASOLKAAI")
-FAISS_INDEX_PATH = "faiss_index_RU"
 
 embeddings = OpenAIEmbeddings(
     openai_api_key=API_KEY,
@@ -29,7 +28,7 @@ logger.info("Инициализация OpenAIEmbeddings")
 
 try:
     retriever = FAISS.load_local(
-        "faiss_index_RU",
+        "faiss_index_US",
         embeddings,
         allow_dangerous_deserialization=True
     ).as_retriever(
