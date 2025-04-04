@@ -384,6 +384,7 @@ async def handle_photo(message: types.Message):
         logger.error(f"Ошибка: {e}, сообщение: {message}")
 
 
+
 @dp.message_handler(content_types=ContentTypes.ANY)
 async def all_updates_handler(message: types.Message):
     """Обработчик остальных сообщений от пользователя"""
