@@ -23,6 +23,12 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+import re
+import logging
+
+logger = logging.getLogger(__name__)
+
+
 def process_latex_blocks(text: str) -> str:
     """
     Обрабатывает только LaTeX-блоки внутри текста, оставляя остальной текст нетронутым.
@@ -48,7 +54,6 @@ def process_latex_blocks(text: str) -> str:
     except Exception as e:
         logger.error(f"Ошибка обработки LaTeX-блоков: {str(e)}")
         return text
-
 
 def latex_to_unicode(text: str) -> str:
     """
@@ -291,13 +296,16 @@ def convert_markdown_to_markdownv2(text: str) -> str:
         str: Текст, преобразованный в формат MarkdownV2.
     """
     try:
-        special_chars = r"\[\]()~`>#+\-=|{}.!"
+        special_chars = r"\[\]()~`>#+\-=|{}.!_"
 
         username_pattern = re.compile(r'(@[A-Za-z0-9_]{5,32})')
         usernames = {}
 
         link_pattern = re.compile(r"\[([^\]]+)\]\((https?:\/\/[^\)]+)\)")
         links = {}
+
+        underline_placeholders = {}
+        underline_pattern = re.compile(r'__(.*?)__')
 
         def save_username(match):
             """Сохраняет юзернеймы временно, чтобы не экранировать _ дважды."""
@@ -313,6 +321,12 @@ def convert_markdown_to_markdownv2(text: str) -> str:
             links[placeholder] = f"[{text}]({url})"
             return placeholder
 
+        def save_underline(match):
+            text = match.group(0)  # __текст__
+            placeholder = f"%%UNDERLINE{len(underline_placeholders)}%%"
+            underline_placeholders[placeholder] = text
+            return placeholder
+
         text = link_pattern.sub(save_link, text)
         text = username_pattern.sub(save_username, text)
         text = process_latex_blocks(text)
@@ -324,7 +338,6 @@ def convert_markdown_to_markdownv2(text: str) -> str:
 
         def process_text_part(part: str) -> str:
             """Обрабатывает обычный текст, не затрагивая кодовые блоки."""
-            part = re.sub(r"(?<!\\)_", r"\_", part)
             part = re.sub(r"\*\*(.*?)\*\*", r"*\1*", part)
             part = re.sub(r"##### (.*?)\n", r"__\1__\n", part)
             part = re.sub(r"#### (.*?)\n", r"__\1__\n", part)
@@ -332,7 +345,7 @@ def convert_markdown_to_markdownv2(text: str) -> str:
             part = re.sub(r"## (.*?)\n", r"__\1__\n", part)
             part = re.sub(r"# (.*?)\n", r"__\1__\n", part)
             part = re.sub(r"__(.*?)__", r"__\1__", part)
-
+            part = underline_pattern.sub(save_underline, part)
             return escape_special_chars(part)
 
         code_block_pattern = re.compile(r"(```.*?```)", re.DOTALL)
@@ -350,6 +363,9 @@ def convert_markdown_to_markdownv2(text: str) -> str:
 
         for placeholder, username in usernames.items():
             result = result.replace(placeholder, username)
+
+        for placeholder, original in underline_placeholders.items():
+            result = result.replace(placeholder, original)
 
         return result
 
