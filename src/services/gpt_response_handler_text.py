@@ -17,7 +17,7 @@ load_dotenv()
 
 logger = logging.getLogger(__name__)
 
-MODEL_GPT4 = "gpt-4o-mini"
+MODEL_GPT4 = "gpt-4o"
 API_KEY = os.getenv("GPT_SECRET_KEY_FASOLKAAI")
 
 embeddings = OpenAIEmbeddings(
