@@ -1,0 +1,8 @@
+__pycache__
+__pycache__/
+
+
+/db/fasolka.json
+/.env
+/logs/LOG_file.log
+/venv/
